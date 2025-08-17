@@ -1,0 +1,16 @@
+{
+  "name": "spat-diamond",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:InvisiBug/spat-diamond.git",
+  "author": "InvisiBug <matthewjkavanagh@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "start": "echo start",
+    "start:infra": "cd ./infra && docker-compose up -d",
+    "stop:infra": "cd ./infra && docker-compose down"
+  },
+  "dependencies": {
+    "prettier": "^3.6.2"
+  }
+}
