@@ -1,27 +1,123 @@
+////////////////////////////////////////////////////////////////////////
+//
+//  ###
+//   #  #    #  ####  #      #    # #####  ######  ####
+//   #  ##   # #    # #      #    # #    # #      #
+//   #  # #  # #      #      #    # #    # #####   ####
+//   #  #  # # #      #      #    # #    # #           #
+//   #  #   ## #    # #      #    # #    # #      #    #
+//  ### #    #  ####  ######  ####  #####  ######  ####
+// boop
+////////////////////////////////////////////////////////////////////////
 #include <Arduino.h>
 #include <Stepper.h>
 
-const int stepsPerRevolution = 200;  // change this to fit the number of steps per revolution
-// for your motor
+////////////////////////////////////////////////////////////////////////
+//
+//  ######
+//  #     # ###### ###### # #    # # ##### #  ####  #    #  ####
+//  #     # #      #      # ##   # #   #   # #    # ##   # #
+//  #     # #####  #####  # # #  # #   #   # #    # # #  #  ####
+//  #     # #      #      # #  # # #   #   # #    # #  # #      #
+//  #     # #      #      # #   ## #   #   # #    # #   ## #    #
+//  ######  ###### #      # #    # #   #   #  ####  #    #  ####
+//
+////////////////////////////////////////////////////////////////////////
+#define stepsPerRevolution 2048
+struct {
+  int in1 = 33;
+  int in2 = 25;
+  int in3 = 26;
+  int in4 = 27;
+} smallDiamondPins;
 
-// initialize the stepper library on pins 8 through 11:
-Stepper myStepper(stepsPerRevolution, 8, 9, 10, 11);
+struct {
+  int in1 = 19;
+  int in2 = 5;
+  int in3 = 18;
+  int in4 = 17;
+} largeDiamondPins;
 
+////////////////////////////////////////////////////////////////////////
+//
+//  #     #
+//  #     #   ##   #####  #####  #    #   ##   #####  ######
+//  #     #  #  #  #    # #    # #    #  #  #  #    # #
+//  ####### #    # #    # #    # #    # #    # #    # #####
+//  #     # ###### #####  #    # # ## # ###### #####  #
+//  #     # #    # #   #  #    # ##  ## #    # #   #  #
+//  #     # #    # #    # #####  #    # #    # #    # ######
+//
+////////////////////////////////////////////////////////////////////////
+Stepper largeDiamond(stepsPerRevolution, largeDiamondPins.in1, largeDiamondPins.in2, largeDiamondPins.in3, largeDiamondPins.in4);  // Large Diamond
+Stepper smallDiamond(stepsPerRevolution, smallDiamondPins.in1, smallDiamondPins.in2, smallDiamondPins.in3, smallDiamondPins.in4);  // Small Diamond
+
+////////////////////////////////////////////////////////////////////////
+//
+//  #     #
+//  #     #   ##   #####  #   ##   #####  #      ######  ####
+//  #     #  #  #  #    # #  #  #  #    # #      #      #
+//  #     # #    # #    # # #    # #####  #      #####   ####
+//   #   #  ###### #####  # ###### #    # #      #           #
+//    # #   #    # #   #  # #    # #    # #      #      #    #
+//     #    #    # #    # # #    # #####  ###### ######  ####
+//
+////////////////////////////////////////////////////////////////////////
+
+int steps = 1;
+////////////////////////////////////////////////////////////////////////
+//
+//  ######                                                #####
+//  #     # #####   ####   ####  #####    ##   #    #    #     # #####   ##   #####  ##### #    # #####
+//  #     # #    # #    # #    # #    #  #  #  ##  ##    #         #    #  #  #    #   #   #    # #    #
+//  ######  #    # #    # #      #    # #    # # ## #     #####    #   #    # #    #   #   #    # #    #
+//  #       #####  #    # #  ### #####  ###### #    #          #   #   ###### #####    #   #    # #####
+//  #       #   #  #    # #    # #   #  #    # #    #    #     #   #   #    # #   #    #   #    # #
+//  #       #    #  ####   ####  #    # #    # #    #     #####    #   #    # #    #   #    ####  #
+//
+////////////////////////////////////////////////////////////////////////
 void setup() {
   // set the speed at 60 rpm:
-  myStepper.setSpeed(60);
+  largeDiamond.setSpeed(60);
+  smallDiamond.setSpeed(60);
+
   // initialize the serial port:
-  Serial.begin(9600);
+  Serial.begin(115200);
 }
 
+///////////////////////////////////////////////////////////////////////
+//
+//  #     #                    ######
+//  ##   ##   ##   # #    #    #     # #####   ####   ####  #####    ##   #    #
+//  # # # #  #  #  # ##   #    #     # #    # #    # #    # #    #  #  #  ##  ##
+//  #  #  # #    # # # #  #    ######  #    # #    # #      #    # #    # # ## #
+//  #     # ###### # #  # #    #       #####  #    # #  ### #####  ###### #    #
+//  #     # #    # # #   ##    #       #   #  #    # #    # #   #  #    # #    #
+//  #     # #    # # #    #    #       #    #  ####   ####  #    # #    # #    #
+//
+///////////////////////////////////////////////////////////////////////
 void loop() {
   // step one revolution  in one direction:
   Serial.println("clockwise");
-  myStepper.step(stepsPerRevolution);
+
+  for (int i = 0; i < stepsPerRevolution; i++) {
+    largeDiamond.step(steps);
+    smallDiamond.step(steps);
+  }
+
+  // largeDiamond.step(stepsPerRevolution);
+  // smallDiamond.step(stepsPerRevolution);
   delay(500);
 
   // step one revolution in the other direction:
   Serial.println("counterclockwise");
-  myStepper.step(-stepsPerRevolution);
+  // largeDiamond.step(-stepsPerRevolution);
+  // smallDiamond.step(-stepsPerRevolution);
+
+  for (int i = 0; i < stepsPerRevolution; i++) {
+    largeDiamond.step(-steps);
+    smallDiamond.step(-steps);
+  }
+
   delay(500);
 }
