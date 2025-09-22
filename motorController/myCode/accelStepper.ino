@@ -13,7 +13,6 @@
 #include <Arduino.h>
 #include <MultiStepper.h>
 #include <Stepper.h>
-#include <Streaming.h>  // Serial printouts
 
 ////////////////////////////////////////////////////////////////////////
 //
@@ -42,10 +41,6 @@ struct {
   int in4 = 17;
 } largeDiamondPins;
 
-int largeDiamondPos = 0;
-int smallDiamondPos = 0;
-bool reverse = false;
-
 ////////////////////////////////////////////////////////////////////////
 //
 //  #     #
@@ -60,11 +55,10 @@ bool reverse = false;
 Stepper largeDiamond(stepsPerRevolution, largeDiamondPins.in1, largeDiamondPins.in2, largeDiamondPins.in3, largeDiamondPins.in4);  // Large Diamond
 Stepper smallDiamond(stepsPerRevolution, smallDiamondPins.in1, smallDiamondPins.in2, smallDiamondPins.in3, smallDiamondPins.in4);  // Small Diamond
 
-void stepAndUpdatePos(Stepper &stepper, int &pos, int stepAmount) {
-  stepper.step(stepAmount);
-  pos += stepAmount;
-}
+AccelStepper largeDiamond2(AccelStepper::FULL4WIRE, largeDiamondPins.in1, largeDiamondPins.in2, largeDiamondPins.in3, largeDiamondPins.in4);
+AccelStepper smallDiamond2(AccelStepper::FULL4WIRE, smallDiamondPins.in1, smallDiamondPins.in3, smallDiamondPins.in2, smallDiamondPins.in4);  // ! Swapped 2 and 3
 
+MultiStepper steppers;
 ////////////////////////////////////////////////////////////////////////
 //
 //  #     #
@@ -91,9 +85,27 @@ int steps = 1;
 ////////////////////////////////////////////////////////////////////////
 void setup() {
   // set the speed at 60 rpm:
-  largeDiamond.setSpeed(10);
-  smallDiamond.setSpeed(10);
 
+  largeDiamond.setSpeed(10);
+
+  largeDiamond2.setMaxSpeed(1000);
+  largeDiamond2.setAcceleration(1000.0);
+  largeDiamond2.setSpeed(1000);
+  // largeDiamond2.moveTo(-1000);
+
+  smallDiamond2.setMaxSpeed(1000);
+  smallDiamond2.setAcceleration(1000.0);
+  smallDiamond2.setSpeed(1000);
+  // smallDiamond2.moveTo(-1000);
+
+  // smallDiamond2.setMaxSpeed(500.0);
+  // smallDiamond2.setAcceleration(500.0);
+  // smallDiamond2.moveTo(stepsPerRevolution);
+
+  // initialize the serial port:
+
+  steppers.addStepper(largeDiamond2);
+  steppers.addStepper(smallDiamond2);
   Serial.begin(115200);
 }
 
@@ -109,31 +121,59 @@ void setup() {
 //
 ///////////////////////////////////////////////////////////////////////
 void loop() {
-  // largeDiamond.step(stepsPerRevolution);
-  // smallDiamond.step(-stepsPerRevolution);
+  Serial.println("clockwise");
+  largeDiamond.step(stepsPerRevolution);
+  delay(500);
+
+  // step one revolution in the other direction:
+  Serial.println("counterclockwise");
+  largeDiamond.step(-stepsPerRevolution);
+  delay(500);
+
+  // long positions[2];  // Array of desired stepper positions
+  // positions[0] = 1000;
+  // positions[1] = 1000;
+
+  // steppers.moveTo(positions);
+  // steppers.run();  // Blocks until all are in position
+
+  // if(stepper1)
+
+  // Move to a different coordinate
+  // positions[0] = -1000;
+  // positions[1] = -500;
+  // steppers.moveTo(positions);
+  // steppers.run();  // Blocks until all are in position
+
+  // if (largeDiamond2.distanceToGo() == 0) {
+  //   largeDiamond2.moveTo(-largeDiamond2.currentPosition());
+  // }
+
+  // if (smallDiamond2.distanceToGo() == 0) {
+  //   smallDiamond2.moveTo(-smallDiamond2.currentPosition());
+  // }
+
+  // largeDiamond2.run();
+  // smallDiamond2.run();
+
+  // for (int i = 0; i < stepsPerRevolution; i++) {
+  //   largeDiamond.step(steps);
+  //   smallDiamond.step(steps);
+  // }
+
+  // // largeDiamond.step(stepsPerRevolution);
+  // // smallDiamond.step(stepsPerRevolution);
+  // delay(500);
 
   // // step one revolution in the other direction:
-  // Serial.println("counterclockwise");
-  // largeDiamond.step(-stepsPerRevolution);
-  // smallDiamond.step(stepsPerRevolution);
 
-  if (largeDiamondPos < stepsPerRevolution && reverse == false) {
-    reverse = false;
-  } else if (largeDiamondPos > stepsPerRevolution && reverse == false) {
-    reverse = true;
-  } else if (largeDiamondPos < 0 && reverse == true) {
-    reverse = false;
-  }
+  // // largeDiamond.step(-stepsPerRevolution);
+  // // smallDiamond.step(-stepsPerRevolution);
 
-  if (reverse) {
-    stepAndUpdatePos(largeDiamond, largeDiamondPos, -1);
-    stepAndUpdatePos(smallDiamond, smallDiamondPos, -1);
-  } else {
-    stepAndUpdatePos(largeDiamond, largeDiamondPos, 1);
-    stepAndUpdatePos(smallDiamond, smallDiamondPos, 1);
-  }
+  // for (int i = 0; i < stepsPerRevolution; i++) {
+  //   largeDiamond.step(-steps);
+  //   smallDiamond.step(-steps);
+  // }
 
-  Serial << reverse << " " << largeDiamondPos << "\n";
-
-
+  // delay(500);
 }
