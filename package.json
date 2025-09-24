@@ -6,7 +6,6 @@
   "author": "InvisiBug <matthewjkavanagh@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "start": "echo start",
     "start:infra": "cd ./infra && docker-compose up -d",
     "stop:infra": "cd ./infra && docker-compose down"
   },

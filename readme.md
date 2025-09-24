@@ -2,6 +2,7 @@
 
 ## Resources
 [ESP32 Stepper Motor Example](https://randomnerdtutorials.com/stepper-motor-esp32-web-server/)
+[Accel stepper tutorial](https://www.pjrc.com/teensy/td_libs_AccelStepper.html)
 
 
 ## Overview

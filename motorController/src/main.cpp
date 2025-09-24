@@ -11,9 +11,12 @@
 ////////////////////////////////////////////////////////////////////////
 #include <AccelStepper.h>
 #include <Arduino.h>
+#include <FastLED.h>
 #include <MultiStepper.h>
 #include <Stepper.h>
 #include <Streaming.h>  // Serial printouts
+
+#include "stepper/MyStepper.h"
 
 ////////////////////////////////////////////////////////////////////////
 //
@@ -28,23 +31,28 @@
 ////////////////////////////////////////////////////////////////////////
 // #define stepsPerRevolution 2048
 #define stepsPerRevolution 2048
-struct {
-  int in1 = 33;
-  int in2 = 25;
-  int in3 = 26;
-  int in4 = 27;
-} smallDiamondPins;
+// struct DiamondConfig {
+//   int pin1;
+//   int pin2;
+//   int pin3;
+//   int pin4;
+//   long stepsPerRev;
+//   long distancePerRev = 1
+//   DiamondConfig(int p1, int p2, int p3, int p4, long steps = 2048)
+//       : pin1(p1), pin2(p2), pin3(p3), pin4(p4), stepsPerRev(steps) {}
+// };
 
-struct {
-  int in1 = 19;
-  int in2 = 5;
-  int in3 = 18;
-  int in4 = 17;
-} largeDiamondPins;
+// DiamondConfig largeTestDiamond(33, 25, 26, 27);
 
-int largeDiamondPos = 0;
-int smallDiamondPos = 0;
-bool reverse = false;
+struct DiamondConfig {
+  int pin1;
+  int pin2;
+  int pin3;
+  int pin4;
+};
+
+int incomingByte = 0;  // for incoming serial data
+int state = 0;
 
 ////////////////////////////////////////////////////////////////////////
 //
@@ -57,13 +65,12 @@ bool reverse = false;
 //  #     # #    # #    # #####  #    # #    # #    # ######
 //
 ////////////////////////////////////////////////////////////////////////
-Stepper largeDiamond(stepsPerRevolution, largeDiamondPins.in1, largeDiamondPins.in2, largeDiamondPins.in3, largeDiamondPins.in4);  // Large Diamond
-Stepper smallDiamond(stepsPerRevolution, smallDiamondPins.in1, smallDiamondPins.in2, smallDiamondPins.in3, smallDiamondPins.in4);  // Small Diamond
 
-void stepAndUpdatePos(Stepper &stepper, int &pos, int stepAmount) {
-  stepper.step(stepAmount);
-  pos += stepAmount;
-}
+DiamondConfig largeTestDiamond = {19, 5, 18, 17};
+DiamondConfig smallTestDiamond = {33, 25, 26, 27};
+
+MyStepper large(stepsPerRevolution, 25, 120, largeTestDiamond.pin1, largeTestDiamond.pin2, largeTestDiamond.pin3, largeTestDiamond.pin4);
+MyStepper small(stepsPerRevolution, 25, 120, smallTestDiamond.pin1, smallTestDiamond.pin2, smallTestDiamond.pin3, smallTestDiamond.pin4);
 
 ////////////////////////////////////////////////////////////////////////
 //
@@ -77,7 +84,6 @@ void stepAndUpdatePos(Stepper &stepper, int &pos, int stepAmount) {
 //
 ////////////////////////////////////////////////////////////////////////
 
-int steps = 1;
 ////////////////////////////////////////////////////////////////////////
 //
 //  ######                                                #####
@@ -90,11 +96,10 @@ int steps = 1;
 //
 ////////////////////////////////////////////////////////////////////////
 void setup() {
-  // set the speed at 60 rpm:
-  largeDiamond.setSpeed(10);
-  smallDiamond.setSpeed(10);
-
   Serial.begin(115200);
+
+  small.begin();
+  large.begin();
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -109,31 +114,94 @@ void setup() {
 //
 ///////////////////////////////////////////////////////////////////////
 void loop() {
-  // largeDiamond.step(stepsPerRevolution);
-  // smallDiamond.step(-stepsPerRevolution);
+  if (Serial.available() > 0) {
+    incomingByte = Serial.read();
 
-  // // step one revolution in the other direction:
-  // Serial.println("counterclockwise");
-  // largeDiamond.step(-stepsPerRevolution);
-  // smallDiamond.step(stepsPerRevolution);
-
-  if (largeDiamondPos < stepsPerRevolution && reverse == false) {
-    reverse = false;
-  } else if (largeDiamondPos > stepsPerRevolution && reverse == false) {
-    reverse = true;
-  } else if (largeDiamondPos < 0 && reverse == true) {
-    reverse = false;
+    // Serial.print("I received: ");
+    // Serial.println(incomingByte, DEC);
+    Serial << "incomingByte: " << incomingByte - 48 << endl;
+    state = incomingByte - 48;  // Convert ASCII to integer
   }
 
-  if (reverse) {
-    stepAndUpdatePos(largeDiamond, largeDiamondPos, -1);
-    stepAndUpdatePos(smallDiamond, smallDiamondPos, -1);
-  } else {
-    stepAndUpdatePos(largeDiamond, largeDiamondPos, 1);
-    stepAndUpdatePos(smallDiamond, smallDiamondPos, 1);
+  switch (state) {
+    case 1: {  // * Perlin noise movement *
+      int speed = 10;
+
+      uint32_t smallDiamond = millis() * speed;
+      int smallPercentage = map(inoise16(smallDiamond, 0), 0, 65535, 0, 100);
+      small.goToPercentage(smallPercentage);
+
+      uint32_t largeDiamond = 2 * millis() * speed;  // This value of 2 needs to be played with
+      int largePercentage = map(inoise16(largeDiamond, 0), 0, 65535, 0, 100);
+      large.goToPercentage(largePercentage);
+
+      Serial << "Small: " << smallPercentage << "\tLarge: " << largePercentage << endl;
+
+    } break;
+
+    case 2:  // * Reset to home positions *
+      large.home();
+      small.home();
+      state = 0;
+      break;
+
+    case 3:
+      large.disengageMotors();
+      small.disengageMotors();
+      break;
+
+    case 4:
+      large.rotateOnce(true);
+      small.rotateOnce(true);
+      state = 0;
+      break;
+
+    case 5:
+      large.rotateOnce(false);
+      small.rotateOnce(false);
+      state = 0;
+      break;
+
+    case 6:
+      large.goToPercentage(0);
+      small.goToPercentage(0);
+      state = 0;
+      break;
+
+    case 7:
+      large.goToPercentage(50);
+      small.goToPercentage(50);
+      state = 0;
+      break;
+
+    case 8:
+      large.goToPercentage(100);
+      small.goToPercentage(100);
+      state = 0;
+      break;
+
+    case 9:
+      float largeAngleDeg = millis() / 100;                //
+      float largeAngleRad = largeAngleDeg * 1000 / 57296;  // convert to radians
+      float largeValue = sin(largeAngleRad);               // -1 to +1
+      float largeDistance = (largeValue + 1) / 2 * 100;    // 0 to 1
+      large.goToPercentage(largeDistance);
+
+      // Serial << "Large angle deg: " << largeAngleDeg << "\t Large: " << largeDistance << endl;
+
+      float smallAngle = 180 + millis() / 100.0;         // time in seconds angle
+      float smallAngleRad = smallAngle * 1000 / 57296;   // convert to radians
+      float smallValue = sin(smallAngleRad);             // -1 to +1
+      float smallDistance = (smallValue + 1) / 2 * 100;  // 0 to 1
+
+      small.goToPercentage(smallDistance);
+
+      // Serial << millis() / 1000.0 << '\t' << 180 + millis() / 1000.0 << endl;
+      // Serial << "Large: " << largeDistance << '\t' << "Small: " << smallDistance << endl;
+      // Serial << sin(4) << endl;
+      break;
   }
 
-  Serial << reverse << " " << largeDiamondPos << "\n";
-
-
+  large.run();
+  small.run();
 }
