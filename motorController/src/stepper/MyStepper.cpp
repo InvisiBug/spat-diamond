@@ -46,23 +46,23 @@ void MyStepper::run() {
   }
 }
 
-void MyStepper::rotateOnce(bool clockwise = true) {
-  setTarget(currentPosition + stepsPerRev * (clockwise ? 1 : -1));
-}
-
-bool MyStepper::atTarget() {
-  return currentPosition == targetPosition;
-}
-
+//////////////////////////////////////////////////////////////////////////////
+//
+//   #####
+//  #     # ###### ##### ##### ###### #####   ####
+//  #       #        #     #   #      #    # #
+//   #####  #####    #     #   #####  #    #  ####
+//        # #        #     #   #      #####       #
+//  #     # #        #     #   #      #   #  #    #
+//   #####  ######   #     #   ###### #    #  ####
+//
+//////////////////////////////////////////////////////////////////////////////
 void MyStepper::setTarget(int target) {
   targetPosition = target;
 }
 
-void MyStepper::stepAndUpdatePos(int stepAmount) {
-  thisStepper.step(stepAmount);
-  currentPosition += stepAmount;
-}
-
+// * /////////
+// * Home
 void MyStepper::home() {
   setTarget(0);
 }
@@ -72,12 +72,20 @@ void MyStepper::resetHome() {
   targetPosition = 0;
 }
 
+// * /////////
+// * Rotate
+void MyStepper::rotateOnce(bool clockwise = true) {
+  setTarget(currentPosition + stepsPerRev * (clockwise ? 1 : -1));
+}
+
 void MyStepper::rotateDegrees(float degrees, bool clockwise = true) {
   float rotationsToRotate = degrees / 360.0;
   float stepsToStep = rotationsToRotate * stepsPerRev;
   setTarget(currentPosition + (clockwise ? stepsToStep : -stepsToStep));
 }
 
+// * /////////
+// * Others
 void MyStepper::goToPercentage(float percentage) {
   float distanceToMove = (percentage / 100.0) * hangingDistance;
   float rotationsToRotate = distanceToMove / distancePerRev;
@@ -91,4 +99,35 @@ void MyStepper::disengageMotors() {
   digitalWrite(in2, LOW);
   digitalWrite(in3, LOW);
   digitalWrite(in4, LOW);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//
+//   #####
+//  #     # ###### ##### ##### ###### #####   ####
+//  #       #        #     #   #      #    # #
+//  #  #### #####    #     #   #####  #    #  ####
+//  #     # #        #     #   #      #####       #
+//  #     # #        #     #   #      #   #  #    #
+//   #####  ######   #     #   ###### #    #  ####
+//
+//////////////////////////////////////////////////////////////////////////////
+bool MyStepper::atTarget() {
+  return currentPosition == targetPosition;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//
+//  ######
+//  #     # #####  # #    #   ##   ##### ######
+//  #     # #    # # #    #  #  #    #   #
+//  ######  #    # # #    # #    #   #   #####
+//  #       #####  # #    # ######   #   #
+//  #       #   #  #  #  #  #    #   #   #
+//  #       #    # #   ##   #    #   #   ######
+//
+//////////////////////////////////////////////////////////////////////////////
+void MyStepper::stepAndUpdatePos(int stepAmount) {
+  thisStepper.step(stepAmount);
+  currentPosition += stepAmount;
 }

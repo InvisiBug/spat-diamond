@@ -13,7 +13,6 @@ class MyStepper {
   // Setters
   void rotateOnce(bool clockwise);
   void rotateDegrees(float degrees, bool clockwise);
-  void stepAndUpdatePos(int stepAmount);
   void setTarget(int target);
   void goToPercentage(float percentage);  // 0-100%
 
@@ -24,6 +23,7 @@ class MyStepper {
   void resetHome();
 
  private:
+  void stepAndUpdatePos(int stepAmount);
   int stepsPerRev;
   float drumDiameter;
   float distancePerRev;
