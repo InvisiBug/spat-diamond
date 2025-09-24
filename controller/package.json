@@ -1,0 +1,17 @@
+{
+  "name": "controller",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon --exec \"ts-node \" ./src/index.ts"
+  },
+  "dependencies": {
+    "mqtt": "^5.14.1",
+    "node": "^24.8.0",
+    "nodemon": "^3.1.10",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.2"
+  }
+}
