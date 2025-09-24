@@ -8,6 +8,8 @@
     "dev": "nodemon --exec \"ts-node \" ./src/index.ts"
   },
   "dependencies": {
+    "@types/express": "^5.0.3",
+    "express": "^5.1.0",
     "mqtt": "^5.14.1",
     "node": "^24.8.0",
     "nodemon": "^3.1.10",
