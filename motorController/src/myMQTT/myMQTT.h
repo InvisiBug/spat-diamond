@@ -5,23 +5,20 @@
 
 class MyMQTT {
  public:
-  MyMQTT();
+  MyMQTT(const char* mqttServerIP, int connectionLED);
 
   void start(void (*fn)(char*, uint8_t*, unsigned int));
   void run();
   void subscribeToTopics();
- bool connect();
 
  private:
   const char* nodeName = "Diamonds";
-  void messageReceived(char* topic, byte* payload, unsigned int length);
-  void printMessage(byte* payload, int length);
 
   const char* disconnectMsg = "Diamonds Disconnected";
   const char* controlTopic = "Diamonds Control";
-  const char* mqttServerIP = "192.168.1.63";
+  const char* mqttServerIP;
 
-  int connectionLED = 2;  // Built in LED on most boards
+  int connectionLED;
 
   bool ON = 0;
   bool OFF = 1;
@@ -30,7 +27,7 @@ class MyMQTT {
   long lastConnectionAttempt = 0;
 
   WiFiClient espClient;
-  PubSubClient mqtt = PubSubClient(espClient);  // Needs to be initialized here for some reason, crashes if not
+  PubSubClient mqtt;
 };
 
 #endif

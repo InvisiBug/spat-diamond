@@ -35,10 +35,7 @@
 //
 ////////////////////////////////////////////////////////////////////////
 #define stepsPerRevolution 2048
-#define connectionLED 2
-
-#define ON LOW
-#define OFF HIGH
+#define connectionLED 21
 
 struct DiamondConfig {
   int pin1;
@@ -73,7 +70,7 @@ MyWiFi myWifi("I Don't Mind", "Have2Biscuits", connectionLED);
 // WiFiClient espClient;
 // PubSubClient mqtt(espClient);
 
-MyMQTT myMQTT;
+MyMQTT myMQTT("192.168.1.2", connectionLED);
 
 ////////////////////////////////////////////////////////////////////////
 //
@@ -91,22 +88,6 @@ int state = 0;
 
 bool startup = true;
 
-// const char* wifiSsid = "I Don't Mind";
-// const char* wifiPassword = "Have2Biscuits";
-
-const char* nodeName = "Diamonds";
-
-const char* disconnectMsg = "Diamonds Disconnected";
-const char* controlTopic = "Diamonds Control";
-const char* mqttServerIP = "192.168.1.63";
-
-bool WiFiConnected = false;
-
-// Connection Timers
-long connectionTimeout = (2 * 1000);
-long lastWiFiReconnectAttempt = 0;
-long lastMQTTReconnectAttempt = 0;
-
 ////////////////////////////////////////////////////////////////////////
 //
 //  ######                                                #####
@@ -121,19 +102,6 @@ long lastMQTTReconnectAttempt = 0;
 // Forward declarations for FreeRTOS task functions
 void core1Loop(void* pvParameters);
 void core2Loop(void* pvParameters);
-
-void messageReceived(char* topic, byte* payload, unsigned int length) {
-  // Serial << "Message Received" << endl;
-  printMessage(payload, length);
-}
-
-void printMessage(byte* payload, int length) {
-  Serial << "Deffo this one" << endl;
-  for (int i = 0; i < length; i++) {
-    Serial << (char)payload[i];  // Dont put an endl here
-  }
-  Serial << endl;
-}
 
 void setup() {
   //* System architecture, dual core stuff
@@ -155,6 +123,8 @@ void setup() {
   // start comms
   myWifi.start();
   myMQTT.start(messageReceived);
+
+  pinMode(connectionLED, OUTPUT);
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -170,10 +140,6 @@ void setup() {
 ///////////////////////////////////////////////////////////////////////
 void core1Loop(void* pvParameters) {
   for (;;) {
-    // handleWiFi();
-    // handleMQTT();
-
-
     if (startup) {
       delay(500);  // * Add this back if WDT issues come back
       startup = false;
@@ -195,21 +161,19 @@ void core2Loop(void* pvParameters) {
     myMQTT.run();
     switch (state) {
       case 1: {  // * Perlin noise movement *
-        int speed = 10;
+        // int speed = 10;
 
-        uint32_t smallDiamond = millis() * speed;
-        int smallPercentage = map(inoise16(smallDiamond, 0), 0, 65535, 0, 100);
-        small.goToPercentage(smallPercentage);
+        // uint32_t smallDiamond = millis() * speed;
+        // int smallPercentage = map(inoise16(smallDiamond, 0), 0, 65535, 0, 100);
+        // small.goToPercentage(smallPercentage);
 
-        uint32_t largeDiamond = 2 * millis() * speed;  // This value of 2 needs to be played with
-        int largePercentage = map(inoise16(largeDiamond, 0), 0, 65535, 0, 100);
-        large.goToPercentage(largePercentage);
-
-        // Serial << "Small: " << smallPercentage << "\tLarge: " << largePercentage << endl;
+        // uint32_t largeDiamond = 2 * millis() * speed;  // This value of 2 needs to be played with
+        // int largePercentage = map(inoise16(largeDiamond, 0), 0, 65535, 0, 100);
+        // large.goToPercentage(largePercentage);
 
       } break;
 
-      case 2:  // * Reset to home positions *
+      case 2:
         large.home();
         small.home();
         state = 0;
@@ -221,8 +185,8 @@ void core2Loop(void* pvParameters) {
         break;
 
       case 4:
-        large.rotateOnce(true);
-        small.rotateOnce(true);
+        large.resetHome();
+        small.resetHome();
         state = 0;
         break;
 
@@ -278,4 +242,49 @@ void core2Loop(void* pvParameters) {
 }
 
 void loop() {
+}
+
+void printMessage(byte* payload, int length) {
+  for (int i = 0; i < length; i++) {
+    Serial << (char)payload[i];  // Dont put an endl here
+  }
+  Serial << endl;
+}
+
+void messageReceived(char* topic, byte* payload, unsigned int length) {
+  // Serial << "Message Received" << endl;
+  // state = payload[0] - 48;
+  // printMessage(payload, length);
+
+  if (payload[0] == 'a') {
+    state = payload[2] - 48;  // Convert ASCII to integer
+
+  } else {
+    // Make a String or local char buffer
+    String s;
+    s.reserve(length);
+    for (unsigned i = 0; i < length; ++i) s += (char)payload[i];
+
+    // Split on commas
+    int last = 0;
+    int idx;
+    int values[5];  // adjust size
+    int count = 0;
+
+    while ((idx = s.indexOf(',', last)) != -1 && count < 5) {
+      values[count++] = s.substring(last, idx).toInt();
+      last = idx + 1;
+    }
+    if (count < 5 && last < s.length()) {
+      values[count++] = s.substring(last).toInt();
+    }
+
+    // Serial << "Recieved % values" << endl;
+    // Serial << "Small: " << values[0] << "%\tLarge: " << values[1] << "%" << endl;
+
+    if (state == 1) {
+      small.goToPercentage(values[0]);
+      large.goToPercentage(values[1]);
+    }
+  }
 }

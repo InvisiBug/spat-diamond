@@ -25,8 +25,8 @@ class MyStepper {
  private:
   void stepAndUpdatePos(int stepAmount);
   int stepsPerRev;
-  float drumDiameter;
   float distancePerRev;
+  float drumDiameter;     // in mm
   float hangingDistance;  // in mm
 
   int currentPosition;  // In steps

@@ -59,6 +59,7 @@ void MyStepper::run() {
 //////////////////////////////////////////////////////////////////////////////
 void MyStepper::setTarget(int target) {
   targetPosition = target;
+  run();
 }
 
 // * /////////
