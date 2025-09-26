@@ -14,10 +14,7 @@
 #include <FastLED.h>
 #include <MultiStepper.h>
 #include <PubSubClient.h>  // MQTT
-// #include <Stepper.h>
 #include <Streaming.h>
-#include <WiFi.h>
-#include <WiFiClient.h>  // Wifi
 
 #include "myMQTT/myMQTT.h"
 #include "stepper/MyStepper.h"
@@ -67,9 +64,6 @@ MyStepper small(stepsPerRevolution, 25, 120, smallTestDiamond.pin1, smallTestDia
 
 MyWiFi myWifi("I Don't Mind", "Have2Biscuits", connectionLED);
 
-// WiFiClient espClient;
-// PubSubClient mqtt(espClient);
-
 MyMQTT myMQTT("192.168.1.2", connectionLED);
 
 ////////////////////////////////////////////////////////////////////////
@@ -102,6 +96,7 @@ bool startup = true;
 // Forward declarations for FreeRTOS task functions
 void core1Loop(void* pvParameters);
 void core2Loop(void* pvParameters);
+void messageReceived(char* topic, byte* payload, unsigned int length);
 
 void setup() {
   //* System architecture, dual core stuff
@@ -160,7 +155,8 @@ void core2Loop(void* pvParameters) {
   for (;;) {
     myMQTT.run();
     switch (state) {
-      case 1: {  // * Perlin noise movement *
+      case 1: {
+        //! MQTT messages enabeled for state 1 below :portal_door: @see messageReceived() have a look at comment anchors extension
         // int speed = 10;
 
         // uint32_t smallDiamond = millis() * speed;

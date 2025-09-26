@@ -1,67 +1,76 @@
 import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
+import Button from "@/lib/components/modeButton";
+import AnimationButton from "@/lib/components/animationButton";
+
 import "./App.css";
 
+const animations = ["perlin", "sine", "stop"];
+const modes = [
+  { api: "status", text: "Server Liveness Test" },
+  { api: "enableMQTT", text: "Enable MQTT Messages" },
+  { api: "disableSteppers", text: "Disable Motors" },
+  { api: "home", text: "Home All Diamonds" },
+  { api: "resetHome", text: "Reset Home Position" },
+];
+
 function App() {
-  const [count, setCount] = useState(0);
-  const [apiResult, setApiResult] = useState<string | null>(null);
+  const [response, setResponse] = useState<ResponseType>({} as ResponseType);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-200">
-      <button
-        onClick={async () => {
-          try {
-            const response = await fetch("http://localhost:3000/api/status");
-            const data = await response.json();
-            setApiResult(`API says: ${data.message}`);
-          } catch (error) {
-            console.log("Failed to fetch from API");
-          }
-        }}
-        className="mb-8 px-6 py-2 bg-green-600 text-white rounded shadow hover:bg-green-700 transition-colors"
-      >
-        Call API
-      </button>
-      {apiResult && (
-        <div className="mb-6 px-6 py-3 bg-white rounded shadow text-green-700 font-medium border border-green-300">
-          {apiResult}
+    <div className="min-h-screen min-w-screen flex items-center justify-center bg-gray-500">
+      <div className="grid grid-cols-2 gap-12 w-full max-w-4xl">
+        {/* Left Column */}
+        <div className="flex flex-col gap-12 bg-gray-200 rounded-lg p-8 shadow">
+          {/* Animations Row */}
+          <div className="bg-gray-50 rounded-lg p-6 shadow">
+            <h2 className="mb-4 text-lg font-semibold">Animations</h2>
+            <div className="flex flex-wrap gap-4">
+              {animations.map((animation) => (
+                <AnimationButton
+                  key={animation}
+                  api={animation}
+                  setResponse={setResponse}
+                >
+                  {animation.charAt(0).toUpperCase() + animation.slice(1)}
+                </AnimationButton>
+              ))}
+            </div>
+          </div>
+          {/* Modes Row */}
+          <div className="bg-gray-50 rounded-lg p-6 shadow">
+            <h2 className="mb-4 text-lg font-semibold">Modes</h2>
+            <div className="flex flex-wrap gap-4">
+              {modes.map((mode) => (
+                <Button key={mode.api} api={mode.api} setResponse={setResponse}>
+                  {mode.text}
+                </Button>
+              ))}
+            </div>
+          </div>
         </div>
-      )}
-      <div className="flex space-x-8 mb-8">
-        <a href="https://vite.dev" target="_blank" rel="noopener noreferrer">
-          <img
-            src={viteLogo}
-            className="h-16 w-16 transition-transform hover:scale-110"
-            alt="Vite logo"
-          />
-        </a>
-        <a href="https://react.dev" target="_blank" rel="noopener noreferrer">
-          <img
-            src={reactLogo}
-            className="h-16 w-16 transition-transform hover:scale-110"
-            alt="React logo"
-          />
-        </a>
+        {/* Right Column */}
+        <div className="flex flex-col items-center justify-center h-full bg-gray-100 rounded-lg p-8 shadow">
+          <h2 className="mb-4 text-lg font-semibold">Response</h2>
+          {response.message && (
+            <div
+              className={`mb-6 px-6 py-3 bg-white rounded shadow font-medium ${
+                response.status === "error"
+                  ? "text-red-700 border border-red-300"
+                  : "text-green-700 border border-green-300"
+              }`}
+            >
+              {response.message}
+            </div>
+          )}
+        </div>
       </div>
-      <h1 className="text-4xl font-bold mb-6 text-gray-800">Vite + React</h1>
-      <div className="bg-white rounded-lg shadow p-8 flex flex-col items-center mb-6">
-        <button
-          onClick={() => setCount((count) => count + 1)}
-          className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors mb-4"
-        >
-          count is {count}
-        </button>
-        <p className="text-gray-600">
-          Edit <code className="bg-gray-200 px-1 rounded">src/App.tsx</code> and
-          save to test HMR
-        </p>
-      </div>
-      <p className="text-gray-500">
-        Click on the Vite and React logos to learn more
-      </p>
     </div>
   );
 }
+
+type ResponseType = {
+  status: string;
+  message: string;
+};
 
 export default App;
