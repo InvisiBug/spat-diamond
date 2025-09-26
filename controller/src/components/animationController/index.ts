@@ -7,9 +7,11 @@ export default class {
   sineWave: SineWave;
   client: MqttClient;
   state: string;
+  update: boolean;
 
   constructor(client: MqttClient) {
     this.state = "idle";
+    this.update = false;
 
     this.perlinNoise = new PerlinNoise();
     this.sineWave = new SineWave();
@@ -19,32 +21,42 @@ export default class {
   tick() {
     switch (this.state) {
       case "perlin":
-        const sin = this.perlinNoise.getNoiseValues();
+        if (!this.update) console.log("Running Perlin Noise Animation");
+
+        const sin = this.perlinNoise.getNoiseValues(true);
         this.client.publish("Diamonds Control", sin);
         break;
 
       case "sine":
-        const sine = this.sineWave.getValues();
+        if (!this.update) console.log("Running Sine Wave Animation");
+
+        const sine = this.sineWave.getValues(true);
         this.client.publish("Diamonds Control", sine);
         break;
 
       case "idle":
+        if (!this.update) console.log("Controller Idle");
         break;
 
       default:
         break;
     }
+
+    this.update = true;
   }
 
   public perlin() {
     this.state = "perlin";
+    this.update = false;
   }
 
   public sine() {
     this.state = "sine";
+    this.update = false;
   }
 
   public idle() {
     this.state = "idle";
+    this.update = false;
   }
 }

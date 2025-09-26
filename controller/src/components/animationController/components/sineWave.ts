@@ -5,7 +5,7 @@ export default class {
     this.pos = 0;
   }
 
-  public getValues() {
+  public getValues(log: boolean) {
     if (this.pos == 360) this.pos = 0;
 
     const largeAngleRad = this.pos * (Math.PI / 180); // convert to radians
@@ -16,7 +16,7 @@ export default class {
     const smallValue = Math.sin(smallAngleRad); // -1 to +1
     const smallDistance = ((smallValue + 1) / 2) * 100; // 0 to 1
     const message = `${largeDistance.toFixed(0).toString().padStart(2, "0")},${smallDistance.toFixed(0).toString().padStart(2, "0")}`;
-    console.log(message);
+    if (log) console.log("Sine Wave: ", message);
 
     this.pos += 1;
 

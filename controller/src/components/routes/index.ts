@@ -42,16 +42,19 @@ export default (client: MqttClient, controller: Controller) => {
 
   app.post("/api/home", (_: Request, res: Response) => {
     res.json({ status: "ok", message: "Homing Diamonds" });
+    controller.idle();
     client.publish("Diamonds Control", "a 2");
   });
 
   app.post("/api/disableSteppers", (_: Request, res: Response) => {
     res.json({ status: "ok", message: "Steppers disabled" });
+    controller.idle();
     client.publish("Diamonds Control", "a 3");
   });
 
   app.post("/api/resetHome", (_: Request, res: Response) => {
     res.json({ status: "ok", message: "Resetting home position" });
+    controller.idle();
     client.publish("Diamonds Control", "a 4");
   });
 
